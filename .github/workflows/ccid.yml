@@ -1,0 +1,35 @@
+name: Deploy AwsProject-Frontend
+
+on:
+  push:
+    branches:
+      - main  # Change if your branch is 'master'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build Docker Image
+        run: docker build -t mpremkumar9999/awsproject-frontend .
+
+      - name: Push Docker Image
+        run: docker push mpremkumar9999/awsproject-frontend:latest
+
+  deploy:
+    needs: build
+    runs-on: self-hosted
+    steps:
+      - name: Pull Image from Docker Hub
+        run: docker pull mpremkumar9999/awsproject-frontend:latest
+
+      - name: Remove old container (if exists)
+        run: docker rm -f awsproject-frontend-container || true
+
+      - name: Run new container
+        run: docker run -d -p 5173:80 --name awsproject-frontend-container mpremkumar9999/awsproject-frontend
